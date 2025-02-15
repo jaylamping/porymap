@@ -12,7 +12,6 @@
 #include <QCloseEvent>
 #include <QAbstractItemModel>
 #include <QJSValue>
-#include "project.h"
 #include "orderedjson.h"
 #include "config.h"
 #include "map.h"
@@ -22,7 +21,6 @@
 #include "mapimageexporter.h"
 #include "filterchildrenproxymodel.h"
 #include "newmappopup.h"
-#include "newtilesetdialog.h"
 #include "shortcutseditor.h"
 #include "preferenceeditor.h"
 #include "projectsettingseditor.h"

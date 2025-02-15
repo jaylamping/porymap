@@ -514,22 +514,21 @@ QString Map::getScriptsFilePath() const {
     const bool usePoryscript = projectConfig.getUsePoryScript();
 
     // Determine the correct folder based on the map name.
-    QString folder;
-    if (this->name.compare("Kanto", Qt::CaseInsensitive) == 0) {
-        folder = projectConfig.getFilePath(ProjectFilePath::data_map_kanto_folder);
-    } else if (this->name.compare("Johto", Qt::CaseInsensitive) == 0) {
-        folder = projectConfig.getFilePath(ProjectFilePath::data_map_johto_folder);
-    } else if (this->name.compare("Hoenn", Qt::CaseInsensitive) == 0) {
-        folder = projectConfig.getFilePath(ProjectFilePath::data_map_hoenn_folder);
-    } else {
-        folder = projectConfig.getFilePath(ProjectFilePath::data_map_folders);
+    QString region;
+    if (this->name.contains("Kanto", Qt::CaseInsensitive)) {
+        region = "kanto";
+    } else if (this->name.contains("Johto", Qt::CaseInsensitive)) {
+        region = "johto";
+    } else if (this->name.contains("Hoenn", Qt::CaseInsensitive)) {
+        region = "hoenn";
     }
 
     // Build the full scripts file path.
-    auto path = QDir::cleanPath(QString("%1/%2/%3/scripts")
-                                    .arg(projectConfig.getProjectDir())
-                                    .arg(folder)
-                                    .arg(this->name));
+    auto path = QDir::cleanPath(QString("%1/%2/%3/%4/scripts")
+        .arg(projectConfig.getProjectDir())
+        .arg(projectConfig.getFilePath(ProjectFilePath::data_map_folders))
+        .arg(region)
+        .arg(this->name));
 
     auto extension = Project::getScriptFileExtension(usePoryscript);
     if (usePoryscript && !QFile::exists(path + extension))

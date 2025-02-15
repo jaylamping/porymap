@@ -358,23 +358,35 @@ QString Project::readMapLayoutId(QString map_name) {
         return mapCache.value(map_name)->layoutId;
     }
 
-    // Select the correct folder based on the map name.
-    QString folder;
-    if (map_name.compare("Kanto", Qt::CaseInsensitive) == 0) {
-        folder = projectConfig.getFilePath(ProjectFilePath::data_map_kanto_folder);
-    } else if (map_name.compare("Johto", Qt::CaseInsensitive) == 0) {
-        folder = projectConfig.getFilePath(ProjectFilePath::data_map_johto_folder);
-    } else if (map_name.compare("Hoenn", Qt::CaseInsensitive) == 0) {
-        folder = projectConfig.getFilePath(ProjectFilePath::data_map_hoenn_folder);
-    } else {
-        folder = projectConfig.getFilePath(ProjectFilePath::data_map_folders);
+    // // Select the correct folder based on the map name.
+    // QString region;
+    // if (map_name.contains("Kanto", Qt::CaseInsensitive)) {
+    //     region = projectConfig.getFilePath(ProjectFilePath::data_map_kanto_folder);
+    // } else if (map_name.contains("Johto", Qt::CaseInsensitive)) {
+    //     region = projectConfig.getFilePath(ProjectFilePath::data_map_johto_folder);
+    // } else if (map_name.contains("Hoenn", Qt::CaseInsensitive)) {
+    //     region = projectConfig.getFilePath(ProjectFilePath::data_map_hoenn_folder);
+    // }
+
+    // // Build the filepath. Adjust the formatting as needed based on folder string structure.
+    // QString mapFilepath = QString("%1/%2%3/map.json")
+    //                           .arg(root)
+    //                           .arg(folder)
+    //                           .arg(map_name);
+
+    // Determine the correct folder based on the map name.
+    QString region;
+    if (map_name.contains("Kanto", Qt::CaseInsensitive)) {
+        region = "kanto";
+    } else if (map_name.contains("Johto", Qt::CaseInsensitive)) {
+        region = "johto";
+    } else if (map_name.contains("Hoenn", Qt::CaseInsensitive)) {
+        region = "hoenn";
     }
 
-    // Build the filepath. Adjust the formatting as needed based on folder string structure.
-    QString mapFilepath = QString("%1/%2%3/map.json")
-                              .arg(root)
-                              .arg(folder)
-                              .arg(map_name);
+    // Build the full scripts file path.
+    QString mapFilepath = QString("%1/%2/%3/%4/map.json")
+                                    .arg(projectConfig.getProjectDir(), projectConfig.getFilePath(ProjectFilePath::data_map_folders), region, map_name);
 
     QJsonDocument mapDoc;
     if (!parser.tryParseJsonFile(&mapDoc, mapFilepath)) {
@@ -393,21 +405,19 @@ QString Project::readMapLocation(QString map_name) {
     }
 
     // Determine the correct folder based on the map name.
-    QString folder;
-    if (map_name.compare("Kanto", Qt::CaseInsensitive) == 0) {
-        folder = projectConfig.getFilePath(ProjectFilePath::data_map_kanto_folder);
-    } else if (map_name.compare("Johto", Qt::CaseInsensitive) == 0) {
-        folder = projectConfig.getFilePath(ProjectFilePath::data_map_johto_folder);
-    } else if (map_name.compare("Hoenn", Qt::CaseInsensitive) == 0) {
-        folder = projectConfig.getFilePath(ProjectFilePath::data_map_hoenn_folder);
-    } else {
-        folder = projectConfig.getFilePath(ProjectFilePath::data_map_folders);
+    QString region;
+    if (map_name.contains("Kanto", Qt::CaseInsensitive)) {
+        region = projectConfig.getFilePath(ProjectFilePath::data_map_kanto_folder);
+    } else if (map_name.contains("Johto", Qt::CaseInsensitive)) {
+        region = projectConfig.getFilePath(ProjectFilePath::data_map_johto_folder);
+    } else if (map_name.contains("Hoenn", Qt::CaseInsensitive)) {
+        region = projectConfig.getFilePath(ProjectFilePath::data_map_hoenn_folder);
     }
 
     // Build the filepath. Adjust formatting if needed.
     QString mapFilepath = QString("%1/%2%3/map.json")
                               .arg(root)
-                              .arg(folder)
+                              .arg(region)
                               .arg(map_name);
 
     QJsonDocument mapDoc;
@@ -1217,7 +1227,17 @@ void Project::saveMap(Map *map) {
     // Create/Modify a few collateral files for brand new maps.
     // collateral deez nutz
     QString basePath = projectConfig.getFilePath(ProjectFilePath::data_map_folders);
-    QString mapDataDir = root + "/" + basePath + map->name;
+
+    QString region;
+    if (map->name.contains("Kanto", Qt::CaseInsensitive)) {
+        region = "kanto";
+    } else if (map->name.contains("Johto", Qt::CaseInsensitive)) {
+        region = "johto";
+    } else if (map->name.contains("Hoenn", Qt::CaseInsensitive)) {
+        region = "hoenn";
+    }
+
+    QString mapDataDir = root + "/" + basePath + region + map->name;
     if (!map->isPersistedToFile) {
         if (!QDir::root().mkdir(mapDataDir)) {
             logError(QString("Error: failed to create directory for new map: '%1'").arg(mapDataDir));
@@ -2532,8 +2552,7 @@ QStringList Project::getEventScriptsFilePaths() const {
 
     // Create a list of map directories including the default folder and the child directories.
     QStringList mapsDirs;
-    mapsDirs << QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_map_folders))
-             << QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_map_kanto_folder))
+    mapsDirs << QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_map_kanto_folder))
              << QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_map_johto_folder))
              << QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_map_hoenn_folder));
 

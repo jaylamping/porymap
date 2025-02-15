@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "newtilesetdialog.h"
 #include "ui_mainwindow.h"
 #include "aboutporymap.h"
 #include "project.h"
@@ -723,7 +724,6 @@ bool MainWindow::setMap(QString map_name, bool scrollTreeView) {
     }
 
     if (!editor || !editor->setMap(map_name)) {
-        logWarn(QString("Failed to set map to '%1'").arg(map_name));
         return false;
     }
 
@@ -1466,15 +1466,22 @@ void MainWindow::currentMetatilesSelectionChanged() {
 void MainWindow::on_mapList_activated(const QModelIndex &index)
 {
     QVariant data = index.data(Qt::UserRole);
+
     if (index.data(MapListUserRoles::TypeRole) == "map_name" && !data.isNull()) {
-        QString mapName = data.toString();
+        QString mapName = "Kanto_" + data.toString();
         if (!setMap(mapName)) {
-            QMessageBox msgBox(this);
-            QString errorMsg = QString("There was an error opening map %1. Please see %2 for full error details.\n\n%3")
-                    .arg(mapName)
-                    .arg(getLogPath())
-                    .arg(getMostRecentError());
-            msgBox.critical(nullptr, "Error Opening Map", errorMsg);
+            QString mapName = "Johto_" + data.toString();
+            if (!setMap(mapName)) {
+                QString mapName = "Hoenn_" + data.toString();
+                if (!setMap(mapName)) {
+                    QMessageBox msgBox(this);
+                    QString errorMsg = QString("There was an error opening map %1. Please see %2 for full error details.\n\n%3")
+                            .arg(mapName)
+                            .arg(getLogPath())
+                            .arg(getMostRecentError());
+                    msgBox.critical(nullptr, "Error Opening Map", errorMsg);
+                }
+            }
         }
     }
 }
