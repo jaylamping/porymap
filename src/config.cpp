@@ -129,6 +129,9 @@ const QMap<ProjectIdentifier, QPair<QString, QString>> ProjectConfig::defaultIde
 
 const QMap<ProjectFilePath, QPair<QString, QString>> ProjectConfig::defaultPaths = {
     {ProjectFilePath::data_map_folders,                 { "data_map_folders",                "data/maps/"}},
+    {ProjectFilePath::data_map_kanto_folder,            { "data_map_kanto_folder",           "data/maps/kanto/"}},
+    {ProjectFilePath::data_map_johto_folder,            { "data_map_johto_folder",           "data/maps/johto/"}},
+    {ProjectFilePath::data_map_hoenn_folder,            { "data_map_hoenn_folder",           "data/maps/hoenn/"}},
     {ProjectFilePath::data_scripts_folders,             { "data_scripts_folders",            "data/scripts/"}},
     {ProjectFilePath::data_layouts_folders,             { "data_layouts_folders",            "data/layouts/"}},
     {ProjectFilePath::data_tilesets_folders,            { "data_tilesets_folders",           "data/tilesets/"}},

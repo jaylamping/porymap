@@ -21,7 +21,7 @@ NewTilesetDialog::NewTilesetDialog(Project* project, QWidget *parent) :
 
     connect(this->ui->nameLineEdit, &QLineEdit::textChanged, this, &NewTilesetDialog::NameOrSecondaryChanged);
     connect(this->ui->typeComboBox, &QComboBox::currentTextChanged, this, &NewTilesetDialog::SecondaryChanged);
-    connect(this->ui->fillCheckBox, &QCheckBox::stateChanged, this, &NewTilesetDialog::FillChanged);
+    connect(this->ui->fillCheckBox, &QCheckBox::checkStateChanged, this, &NewTilesetDialog::FillChanged);
     //connect(this->ui->toolButton, &QToolButton::clicked, this, &NewTilesetDialog::ChangeFilePath);
     this->SecondaryChanged();
 }

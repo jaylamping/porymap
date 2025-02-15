@@ -1,6 +1,5 @@
 #include "project.h"
 #include "config.h"
-#include "history.h"
 #include "log.h"
 #include "parseutil.h"
 #include "paletteutil.h"
@@ -179,7 +178,22 @@ bool Project::loadMapData(Map* map) {
         return true;
     }
 
-    QString mapFilepath = QString("%1/%3%2/map.json").arg(root).arg(map->name).arg(projectConfig.getFilePath(ProjectFilePath::data_map_folders));
+    // Choose the appropriate folder based on the map's name.
+    QString folder;
+    if (map->name.contains("Kanto", Qt::CaseInsensitive)) {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_kanto_folder);
+    } else if (map->name.contains("Johto", Qt::CaseInsensitive)) {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_johto_folder);
+    } else if (map->name.contains("Hoenn", Qt::CaseInsensitive)) {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_hoenn_folder);
+    } else {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_folders);
+    }
+
+    // Build the full filepath. Adjust the formatting (slashes, order) as needed.
+    QString mapFilepath = QString("%1/%2%3/map.json")
+                              .arg(root, folder, map->name);
+
     QJsonDocument mapDoc;
     if (!parser.tryParseJsonFile(&mapDoc, mapFilepath)) {
         logError(QString("Failed to read map data from %1").arg(mapFilepath));
@@ -188,6 +202,7 @@ bool Project::loadMapData(Map* map) {
 
     QJsonObject mapObj = mapDoc.object();
 
+    map->id            = ParseUtil::jsonToQString(mapObj["id"]);
     map->song          = ParseUtil::jsonToQString(mapObj["music"]);
     map->layoutId      = ParseUtil::jsonToQString(mapObj["layout"]);
     map->location      = ParseUtil::jsonToQString(mapObj["region_map_section"]);
@@ -343,7 +358,24 @@ QString Project::readMapLayoutId(QString map_name) {
         return mapCache.value(map_name)->layoutId;
     }
 
-    QString mapFilepath = QString("%1/%3%2/map.json").arg(root).arg(map_name).arg(projectConfig.getFilePath(ProjectFilePath::data_map_folders));
+    // Select the correct folder based on the map name.
+    QString folder;
+    if (map_name.compare("Kanto", Qt::CaseInsensitive) == 0) {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_kanto_folder);
+    } else if (map_name.compare("Johto", Qt::CaseInsensitive) == 0) {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_johto_folder);
+    } else if (map_name.compare("Hoenn", Qt::CaseInsensitive) == 0) {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_hoenn_folder);
+    } else {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_folders);
+    }
+
+    // Build the filepath. Adjust the formatting as needed based on folder string structure.
+    QString mapFilepath = QString("%1/%2%3/map.json")
+                              .arg(root)
+                              .arg(folder)
+                              .arg(map_name);
+
     QJsonDocument mapDoc;
     if (!parser.tryParseJsonFile(&mapDoc, mapFilepath)) {
         logError(QString("Failed to read map layout id from %1").arg(mapFilepath));
@@ -354,12 +386,30 @@ QString Project::readMapLayoutId(QString map_name) {
     return ParseUtil::jsonToQString(mapObj["layout"]);
 }
 
+
 QString Project::readMapLocation(QString map_name) {
     if (mapCache.contains(map_name)) {
         return mapCache.value(map_name)->location;
     }
 
-    QString mapFilepath = QString("%1/%3%2/map.json").arg(root).arg(map_name).arg(projectConfig.getFilePath(ProjectFilePath::data_map_folders));
+    // Determine the correct folder based on the map name.
+    QString folder;
+    if (map_name.compare("Kanto", Qt::CaseInsensitive) == 0) {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_kanto_folder);
+    } else if (map_name.compare("Johto", Qt::CaseInsensitive) == 0) {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_johto_folder);
+    } else if (map_name.compare("Hoenn", Qt::CaseInsensitive) == 0) {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_hoenn_folder);
+    } else {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_folders);
+    }
+
+    // Build the filepath. Adjust formatting if needed.
+    QString mapFilepath = QString("%1/%2%3/map.json")
+                              .arg(root)
+                              .arg(folder)
+                              .arg(map_name);
+
     QJsonDocument mapDoc;
     if (!parser.tryParseJsonFile(&mapDoc, mapFilepath)) {
         logError(QString("Failed to read map's region map section from %1").arg(mapFilepath));
@@ -369,6 +419,7 @@ QString Project::readMapLocation(QString map_name) {
     QJsonObject mapObj = mapDoc.object();
     return ParseUtil::jsonToQString(mapObj["region_map_section"]);
 }
+
 
 bool Project::loadLayout(MapLayout *layout) {
     // Force these to run even if one fails
@@ -1164,6 +1215,7 @@ void Project::saveAllMaps() {
 
 void Project::saveMap(Map *map) {
     // Create/Modify a few collateral files for brand new maps.
+    // collateral deez nutz
     QString basePath = projectConfig.getFilePath(ProjectFilePath::data_map_folders);
     QString mapDataDir = root + "/" + basePath + map->name;
     if (!map->isPersistedToFile) {
@@ -1724,23 +1776,33 @@ bool Project::readMapGroups() {
     QJsonArray mapGroupOrder = mapGroupsObj["group_order"].toArray();
     for (int groupIndex = 0; groupIndex < mapGroupOrder.size(); groupIndex++) {
         QString groupName = ParseUtil::jsonToQString(mapGroupOrder.at(groupIndex));
+
+        QString region;
+        if (groupName.contains("Kanto", Qt::CaseInsensitive)) {
+            region = "Kanto_";
+        } else if (groupName.contains("Johto", Qt::CaseInsensitive)) {
+            region = "Johto_";
+        } else if (groupName.contains("Hoenn", Qt::CaseInsensitive)) {
+            region = "Hoenn_";
+        }
+
         QJsonArray mapNamesJson = mapGroupsObj.value(groupName).toArray();
         this->groupedMapNames.append(QStringList());
         this->groupNames.append(groupName);
         for (int j = 0; j < mapNamesJson.size(); j++) {
             QString mapName = ParseUtil::jsonToQString(mapNamesJson.at(j));
             if (mapName == DYNAMIC_MAP_NAME) {
-                logWarn(QString("Ignoring map with reserved name '%1'.").arg(mapName));
+                logWarn(QString("Ignoring map with reserved name '%1'.").arg(region + mapName));
                 continue;
             }
             this->mapGroups.insert(mapName, groupIndex);
             this->groupedMapNames[groupIndex].append(mapName);
-            this->mapNames.append(mapName);
+            this->mapNames.append(region + mapName);
 
             // Build the mapping and reverse mapping between map constants and map names.
-            QString mapConstant = Map::mapConstantFromName(mapName);
-            this->mapConstantsToMapNames.insert(mapConstant, mapName);
-            this->mapNamesToMapConstants.insert(mapName, mapConstant);
+            QString mapConstant = Map::mapConstantFromName(region + mapName);
+            this->mapConstantsToMapNames.insert(mapConstant, region + mapName);
+            this->mapNamesToMapConstants.insert(region + mapName, mapConstant);
         }
     }
 
@@ -1877,7 +1939,7 @@ bool Project::readTilesetLabels() {
         const auto structs = parser.readCStructs(filename, "", Tileset::getHeaderMemberMap(this->usingAsmTilesets));
         QStringList labels = structs.keys();
         // TODO: This is alphabetical, AdvanceMap import wants the vanilla order in tilesetLabelsOrdered
-        for (const auto tilesetLabel : labels){
+        for (const auto &tilesetLabel : labels){
             appendTilesetLabel(tilesetLabel, structs[tilesetLabel].value("isSecondary"));
         }
     }
@@ -2138,7 +2200,7 @@ bool Project::readHealLocations() {
     // Pattern for an x, y number pair
     const QString coordPattern = "\\s*(?<x>[0-9A-Fa-fx]+),\\s*(?<y>[0-9A-Fa-fx]+)"; 
 
-    for (const auto idName : constants) {
+    for (const auto &idName : constants) {
         // Create regex pattern for e.g. "SPAWN_PALLET_TOWN - 1] = "
         const QString initializerPattern = QString("%1\\s*-\\s*1\\s*\\]\\s*=\\s*").arg(idName);
 
@@ -2432,32 +2494,80 @@ QString Project::getScriptDefaultString(bool usePoryScript, QString mapName) con
         return QString("%1_MapScripts::\n\t.byte 0\n").arg(mapName);
 }
 
+// QStringList Project::getEventScriptsFilePaths() const {
+//     QStringList filePaths(QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_event_scripts)));
+//     const QString scriptsDir = QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_scripts_folders));
+//     const QString mapsDir = QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_map_folders));
+//     const bool usePoryscript = projectConfig.getUsePoryScript();
+
+//     if (usePoryscript) {
+//         QDirIterator it_pory_shared(scriptsDir, {"*.pory"}, QDir::Files);
+//         while (it_pory_shared.hasNext())
+//             filePaths << it_pory_shared.next();
+
+//         QDirIterator it_pory_maps(mapsDir, {"scripts.pory"}, QDir::Files, QDirIterator::Subdirectories);
+//         while (it_pory_maps.hasNext())
+//             filePaths << it_pory_maps.next();
+//     }
+
+//     QDirIterator it_inc_shared(scriptsDir, {"*.inc"}, QDir::Files);
+//     while (it_inc_shared.hasNext())
+//         filePaths << it_inc_shared.next();
+
+//     QDirIterator it_inc_maps(mapsDir, {"scripts.inc"}, QDir::Files, QDirIterator::Subdirectories);
+//     while (it_inc_maps.hasNext())
+//         filePaths << it_inc_maps.next();
+
+//     return filePaths;
+// }
+
 QStringList Project::getEventScriptsFilePaths() const {
-    QStringList filePaths(QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_event_scripts)));
+    QStringList filePaths;
+
+    // Add the main event scripts folder path.
+    filePaths << QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_event_scripts));
+
+    // Shared scripts directory remains unchanged.
     const QString scriptsDir = QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_scripts_folders));
-    const QString mapsDir = QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_map_folders));
+
+    // Create a list of map directories including the default folder and the child directories.
+    QStringList mapsDirs;
+    mapsDirs << QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_map_folders))
+             << QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_map_kanto_folder))
+             << QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_map_johto_folder))
+             << QDir::cleanPath(root + "/" + projectConfig.getFilePath(ProjectFilePath::data_map_hoenn_folder));
+
     const bool usePoryscript = projectConfig.getUsePoryScript();
 
     if (usePoryscript) {
+        // Iterate over the shared pory script files.
         QDirIterator it_pory_shared(scriptsDir, {"*.pory"}, QDir::Files);
         while (it_pory_shared.hasNext())
             filePaths << it_pory_shared.next();
 
-        QDirIterator it_pory_maps(mapsDir, {"scripts.pory"}, QDir::Files, QDirIterator::Subdirectories);
-        while (it_pory_maps.hasNext())
-            filePaths << it_pory_maps.next();
+        // For each maps directory (default and child directories), collect the pory map scripts.
+        for (const QString &mapsDir : mapsDirs) {
+            QDirIterator it_pory_maps(mapsDir, {"scripts.pory"}, QDir::Files, QDirIterator::Subdirectories);
+            while (it_pory_maps.hasNext())
+                filePaths << it_pory_maps.next();
+        }
     }
 
+    // Iterate over shared inc script files.
     QDirIterator it_inc_shared(scriptsDir, {"*.inc"}, QDir::Files);
     while (it_inc_shared.hasNext())
         filePaths << it_inc_shared.next();
 
-    QDirIterator it_inc_maps(mapsDir, {"scripts.inc"}, QDir::Files, QDirIterator::Subdirectories);
-    while (it_inc_maps.hasNext())
-        filePaths << it_inc_maps.next();
+    // For each maps directory (default and child directories), collect the inc map scripts.
+    for (const QString &mapsDir : mapsDirs) {
+        QDirIterator it_inc_maps(mapsDir, {"scripts.inc"}, QDir::Files, QDirIterator::Subdirectories);
+        while (it_inc_maps.hasNext())
+            filePaths << it_inc_maps.next();
+    }
 
     return filePaths;
 }
+
 
 void Project::setEventPixmap(Event *event, bool forceLoad) {
     if (event && (event->getPixmap().isNull() || forceLoad))

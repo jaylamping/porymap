@@ -1,4 +1,3 @@
-#include "history.h"
 #include "map.h"
 #include "imageproviders.h"
 #include "scripting.h"
@@ -26,7 +25,7 @@ Map::~Map() {
 
 void Map::setName(QString mapName) {
     name = mapName;
-    constantName = mapConstantFromName(mapName);
+    constantName = mapConstantFromName(mapName, "");
     scriptsLoaded = false;
 }
 
@@ -498,18 +497,48 @@ QStringList Map::getScriptLabels(Event::Group group) {
     return scriptLabels;
 }
 
+// QString Map::getScriptsFilePath() const {
+//     const bool usePoryscript = projectConfig.getUsePoryScript();
+//     auto path = QDir::cleanPath(QString("%1/%2/%3/scripts")
+//                                         .arg(projectConfig.getProjectDir())
+//                                         .arg(projectConfig.getFilePath(ProjectFilePath::data_map_folders))
+//                                         .arg(this->name));
+//     auto extension = Project::getScriptFileExtension(usePoryscript);
+//     if (usePoryscript && !QFile::exists(path + extension))
+//         extension = Project::getScriptFileExtension(false);
+//     path += extension;
+//     return path;
+// }
+
 QString Map::getScriptsFilePath() const {
     const bool usePoryscript = projectConfig.getUsePoryScript();
+
+    // Determine the correct folder based on the map name.
+    QString folder;
+    if (this->name.compare("Kanto", Qt::CaseInsensitive) == 0) {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_kanto_folder);
+    } else if (this->name.compare("Johto", Qt::CaseInsensitive) == 0) {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_johto_folder);
+    } else if (this->name.compare("Hoenn", Qt::CaseInsensitive) == 0) {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_hoenn_folder);
+    } else {
+        folder = projectConfig.getFilePath(ProjectFilePath::data_map_folders);
+    }
+
+    // Build the full scripts file path.
     auto path = QDir::cleanPath(QString("%1/%2/%3/scripts")
-                                        .arg(projectConfig.getProjectDir())
-                                        .arg(projectConfig.getFilePath(ProjectFilePath::data_map_folders))
-                                        .arg(this->name));
+                                    .arg(projectConfig.getProjectDir())
+                                    .arg(folder)
+                                    .arg(this->name));
+
     auto extension = Project::getScriptFileExtension(usePoryscript);
     if (usePoryscript && !QFile::exists(path + extension))
         extension = Project::getScriptFileExtension(false);
+
     path += extension;
     return path;
 }
+
 
 void Map::removeEvent(Event *event) {
     for (Event::Group key : events.keys()) {

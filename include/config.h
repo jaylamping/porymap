@@ -271,6 +271,9 @@ enum ProjectIdentifier {
 };
 
 enum ProjectFilePath {
+    data_map_hoenn_folder,
+    data_map_kanto_folder,
+    data_map_johto_folder,
     data_map_folders,
     data_scripts_folders,
     data_layouts_folders,

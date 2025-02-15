@@ -38,6 +38,7 @@ public:
 
 public:
     QString name;
+    QString id;
     QString constantName;
     QString song;
     QString layoutId;

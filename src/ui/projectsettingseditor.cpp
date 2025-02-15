@@ -41,7 +41,7 @@ void ProjectSettingsEditor::connectSignals() {
     connect(ui->comboBox_BaseGameVersion, &QComboBox::currentTextChanged, this, &ProjectSettingsEditor::promptRestoreDefaults);
     connect(ui->comboBox_AttributesSize, &QComboBox::currentTextChanged, this, &ProjectSettingsEditor::updateAttributeLimits);
     connect(ui->comboBox_IconSpecies, &QComboBox::currentTextChanged, this, &ProjectSettingsEditor::updatePokemonIconPath);
-    connect(ui->checkBox_EnableCustomBorderSize, &QCheckBox::stateChanged, [this](int state) {
+    connect(ui->checkBox_EnableCustomBorderSize, &QCheckBox::checkStateChanged, [this](int state) {
         bool customSize = (state == Qt::Checked);
         // When switching between the spin boxes or line edit for border metatiles we set
         // the newly-shown UI using the values from the hidden UI.
@@ -78,7 +78,7 @@ void ProjectSettingsEditor::connectSignals() {
             connect(combo, &QComboBox::currentTextChanged, this, &ProjectSettingsEditor::markEdited);
     }
     for (auto checkBox : ui->centralwidget->findChildren<QCheckBox *>())
-        connect(checkBox, &QCheckBox::stateChanged, this, &ProjectSettingsEditor::markEdited);
+        connect(checkBox, &QCheckBox::checkStateChanged, this, &ProjectSettingsEditor::markEdited);
     for (auto lineEdit : ui->centralwidget->findChildren<QLineEdit *>())
         connect(lineEdit, &QLineEdit::textEdited, this, &ProjectSettingsEditor::markEdited);
     for (auto spinBox : ui->centralwidget->findChildren<NoScrollSpinBox *>())
